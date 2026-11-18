@@ -16,20 +16,9 @@ type MonitorResult struct {
 
 func Check(resource string) MonitorResult {
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	start := time.Now()
-
 	u, err := url.ParseRequestURI(resource)
-
 	if err != nil {
-
-		return MonitorResult{
-			Error: err,
-		}
-
+		return MonitorResult{Error: err}
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
@@ -44,26 +33,30 @@ func Check(resource string) MonitorResult {
 		}
 	}
 
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	start := time.Now()
+
 	res, err := client.Get(resource)
-	status := true
+	elapsed := time.Since(start)
 
 	if err != nil {
-		status = false
 		return MonitorResult{
-			Error: err,
+			Latency: elapsed,
+			Error:   err,
 		}
 	}
 
 	defer res.Body.Close()
 
-	elapsed := time.Since(start)
+	healthy := res.StatusCode >= 200 && res.StatusCode < 300
 
 	return MonitorResult{
-
 		StatusCode: res.StatusCode,
 		Latency:    elapsed,
-		Health:     status,
+		Health:     healthy,
 		Error:      nil,
 	}
-
 }
