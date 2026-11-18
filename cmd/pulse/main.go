@@ -2,51 +2,30 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"time"
+
+	"github.com/GURUx3/pulse/internal/monitor"
 )
 
 func main() {
+	target := "https://httpbin.org/status/200"
 
-	client := &http.Client{
-		Timeout: 5 * time.Second, // Total timeout for the request
-	}
+	result := monitor.Check(target)
 
-	startTime := time.Now()
+	fmt.Println("\nPULSE MONITOR")
+	fmt.Println("--------------------")
 
-	// fmt.Println(startTime)
-	res, err := client.Get("https://api.github.com/zen/1")
-
-	if err != nil {
-
-		fmt.Println("Timeout error", err)
+	if result.Error != nil {
+		fmt.Println("Health: UNHEALTHY")
+		fmt.Println("Error:", result.Error)
 		return
 	}
 
-	defer res.Body.Close()
+	fmt.Println("Status:", result.StatusCode)
+	fmt.Printf("Latency: %dms\n", result.Latency.Milliseconds())
 
-	// fmt.Println("Header :", res.Header)
-	// body, err := io.ReadAll(res.Body)
-
-	if err != nil {
-		fmt.Println("error", err)
-		return
+	if result.Health {
+		fmt.Println("Health: HEALTHY")
+	} else {
+		fmt.Println("Health: UNHEALTHY")
 	}
-	elapsed := time.Since(startTime)
-	status := res.Status
-
-	hel := "UNHEALTHY"
-
-	if res.StatusCode >= 200 && res.StatusCode < 300 {
-		hel = "HEALTHY"
-	}
-
-	fmt.Println("\n\n")
-	fmt.Println("PLUSE MONITOR")
-	fmt.Println("\n")
-	fmt.Println("Status : ", status)
-	fmt.Printf("Latency: %dms\n", elapsed.Milliseconds())
-	fmt.Println("Health:", hel)
-	// fmt.Println("Body :\n")
-	// fmt.Println(string(body))
 }
